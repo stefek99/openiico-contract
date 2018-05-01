@@ -2,7 +2,7 @@
  *  @author Clément Lesaege - <clement@lesaege.com>
  */
 
-pragma solidity ^0.4.23;
+pragma solidity ^0.4.19;
 
 import "zeppelin-solidity/contracts/token/ERC20/ERC20.sol";
 
@@ -65,6 +65,9 @@ contract IICO {
     uint public sumAcceptedVirtualContrib; // The sum of virtual (taking into account bonuses) contributions.
 
     modifier onlyOwner{ require(owner == msg.sender); _; }
+
+    event BidWithdrawn(uint bidID, address bidder, uint value);
+    event TimeElapsed(uint now, uint lockTime, uint fullBonus, uint time1, uint time2); // used for debugging to know if a transa
 
     /* *** Functions Modifying the state *** */
 
@@ -176,6 +179,8 @@ contract IICO {
 
         bid.withdrawn = true;
 
+        TimeElapsed(now, withdrawalLockTime, endFullBonusTime, withdrawalLockTime - now, withdrawalLockTime - endFullBonusTime);
+
         // Before endFullBonusTime, everything is refunded. Otherwise, an amount decreasing linearly from endFullBonusTime to withdrawalLockTime is refunded.
         uint refund = (now < endFullBonusTime) ? bid.contrib : (bid.contrib * (withdrawalLockTime - now)) / (withdrawalLockTime - endFullBonusTime);
         assert(refund <= bid.contrib); // Make sure that we don't refund more than the contribution. Would a bug arise, we prefer blocking withdrawal than letting someone steal money.
@@ -183,6 +188,8 @@ contract IICO {
         bid.bonus /= 3; // Divide the bonus by 3.
 
         msg.sender.transfer(refund);
+
+        BidWithdrawn(_bidID, msg.sender, refund);
     }
 
     /** @dev Finalize by finding the cut-off bid.
