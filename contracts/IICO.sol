@@ -68,6 +68,10 @@ contract IICO {
 
     event BidWithdrawn(uint bidID, address bidder, uint value);
     event TimeElapsed(uint now, uint lockTime, uint fullBonus, uint time1, uint time2); // used for debugging to know if a transa
+    event ReedemETH(uint ETH);
+    event ReedemTokens(uint tokens);
+    event MaxValCutOffMaxVal(uint one, uint two);
+    event Finalize(uint id, uint eth, uint virtual);
 
     /* *** Functions Modifying the state *** */
 
@@ -230,6 +234,8 @@ contract IICO {
         cutOffBidID = localCutOffBidID;
         sumAcceptedContrib = localSumAcceptedContrib;
         sumAcceptedVirtualContrib = localSumAcceptedVirtualContrib;
+
+        Finalize(cutOffBidID, sumAcceptedContrib, sumAcceptedVirtualContrib);
     }
 
     /** @dev Redeem a bid. If the bid is accepted, send the tokens, otherwise refund the ETH.
@@ -243,10 +249,14 @@ contract IICO {
         require(!bid.redeemed);
 
         bid.redeemed=true;
-        if (bid.maxVal > cutOffBid.maxVal || (bid.maxVal == cutOffBid.maxVal && _bidID >= cutOffBidID)) // Give tokens if the bid is accepted.
+        MaxValCutOffMaxVal(bid.maxVal, cutOffBid.maxVal);
+        if (bid.maxVal > cutOffBid.maxVal || (bid.maxVal == cutOffBid.maxVal && _bidID >= cutOffBidID)) { // Give tokens if the bid is accepted.
             token.transfer(bid.contributor, (tokensForSale * (bid.contrib + (bid.contrib * bid.bonus) / BONUS_DIVISOR)) / sumAcceptedVirtualContrib);
-        else                                                                                            // Reimburse ETH otherwise.
+            ReedemTokens( (tokensForSale * (bid.contrib + (bid.contrib * bid.bonus) / BONUS_DIVISOR)) / sumAcceptedVirtualContrib );
+        } else {                                                                                          // Reimburse ETH otherwise.
             bid.contributor.transfer(bid.contrib);
+            ReedemETH(bid.contrib);
+        }
     }
 
     /** @dev Fallback. Make a bid if ETH are sent. Redeem all the bids of the contributor otherwise.
