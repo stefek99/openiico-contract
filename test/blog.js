@@ -34,13 +34,52 @@ contract('IICO', function (accounts) {
     let token = await MintableToken.new({from: owner})
     await token.mint(iico.address,100E18,{from: owner}) // We will use a 100 PNK sale for the example.
     await iico.setToken(token.address,{from: owner})
+
+
+
+    async function printAll(name) {
+      // var bida = await iico.bids.call(0);
+      // var bidb = await iico.bids.call(1);
+      // var bidc = await iico.bids.call(2);
+      // var bidd = await iico.bids.call(3);
+      // var bide = await iico.bids.call(4);
+      // console.log(name + " " + bida[2].toNumber())
+      // console.log(name + " " + bidb[2].toNumber())
+      // console.log(name + " " + bidc[2].toNumber())
+      // console.log(name + " " + bidd[2].toNumber())
+      // console.log(name + " " + bide[2].toNumber())
+      // console.log("\n\n\n\n\n\n\n\n");
+    }
+
+
     
     increaseTime(1000) // Full bonus period.
     /* ALICE */ await iico.searchAndBid(infinity, 0,{from: buyerA, value:6E18}) // Alice's bid 
+
+    var aliceBid = await iico.bids.call(1);
+
+    printAll("alice")
+
+
+
+
+
+
     increaseTime(5250) // 250 elapsed, 1/20 of 2500+2500
-    /* BOB */ await iico.searchAndBid(20E18, 1,{from: buyerB, value:10E18}) // Bob's bid, bonus 19%
+    /* BOB */ await iico.searchAndBid(20E18, 0,{from: buyerB, value:10E18}) // Bob's bid, bonus 19%
     increaseTime(250) // another 250 elapsed, 2/20 of 2500
-    /* CARL */ await iico.searchAndBid(25E18, 2,{from: buyerC, value:5E18}) // Carl's bid, bonus 18%
+    printAll("bobo")
+
+
+
+
+
+    /* CARL */ await iico.searchAndBid(25E18, 0,{from: buyerC, value:5E18}) // Carl's bid, bonus 18%
+    printAll("carl")
+
+
+
+
 
     // He will only be able to withdraw whatever percentage is left of the first phase. 
     // Carl withdraws manually 80% of the way through the end of the first phase. 
@@ -53,6 +92,11 @@ contract('IICO', function (accounts) {
 
     await expectThrow(iico.withdraw(3,{from: buyerB})) // Only the contributor can withdraw.
     let tx = await iico.withdraw(3,{from: buyerC, gasPrice: gasPrice})
+    printAll("withdraw bob")
+
+
+
+
     await expectThrow(iico.withdraw(3,{from: buyerC, gasPrice: gasPrice})) // cannot withdraw more than once
     let txFee = tx.receipt.gasUsed * gasPrice
     let CarlBalanceAfterReimbursment = web3.eth.getBalance(buyerC)
@@ -65,7 +109,10 @@ contract('IICO', function (accounts) {
     // Now David, after seeing how the sale is evolving, decides that he also wants some tokens 
     // and contributes 4 ETH with a personal cap of 24 ETH. He gets an 8% bonus. 
     increaseTime(1000) // now it is 3000 out of 5000
-    /* DAVID */ await iico.searchAndBid(24E18, 3, {from: buyerC, value:4E18}) // Davids's bid, bonus 8%
+    /* DAVID */ await iico.searchAndBid(24E18, 0, {from: buyerC, value:4E18}) // Davids's bid, bonus 8%
+    printAll("david")
+
+
     var DavidsBid = await iico.bids.call(4);
     var DavidsBidBonus = DavidsBid[4].toNumber();
     assert.closeTo(DavidsBidBonus, 0.8E8, 0.01E8, 'Bonus amount not correct');
@@ -99,6 +146,9 @@ contract('IICO', function (accounts) {
     
     assert.equal(web3.eth.getBalance(beneficiary).toNumber(), beneficiaryBalanceAtTheEndOfSale+14E18, 'The beneficiary has not been paid correctly')
     
+
+
+
     // Verify that the tokens are correctly distributed.
     // assert.equal((await token.balanceOf(buyerA)).toNumber(), 30E24, 'The buyer A has not been given the right amount of tokens')
     // assert.equal((await token.balanceOf(buyerB)).toNumber(), 10E24, 'The buyer B has not been given the right amount of tokens')

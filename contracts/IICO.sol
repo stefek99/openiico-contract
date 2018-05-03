@@ -72,6 +72,8 @@ contract IICO {
     event ReedemTokens(uint tokens);
     event MaxValCutOffMaxVal(uint one, uint two);
     event Finalize(uint id, uint eth, uint virtual);
+    event Finalizing(uint id, uint sum, uint virtual);
+    event CutOff(uint howmuch);
 
     /* *** Functions Modifying the state *** */
 
@@ -211,6 +213,8 @@ contract IICO {
         uint localSumAcceptedContrib = sumAcceptedContrib;
         uint localSumAcceptedVirtualContrib = sumAcceptedVirtualContrib;
 
+        Finalize(cutOffBidID, sumAcceptedContrib, sumAcceptedVirtualContrib);
+
         // Search for the cut-off bid while adding the contributions.
         for (uint it = 0; it < _maxIt && !finalized; ++it) {
             Bid storage bid = bids[localCutOffBidID];
@@ -218,9 +222,11 @@ contract IICO {
                 localSumAcceptedContrib        += bid.contrib;
                 localSumAcceptedVirtualContrib += bid.contrib + (bid.contrib * bid.bonus) / BONUS_DIVISOR;
                 localCutOffBidID = bid.prev; // Go to the previous bid.
+                Finalizing(localCutOffBidID, localSumAcceptedContrib, localSumAcceptedVirtualContrib);
             } else { // We found the cut-off. This bid will be taken partially.
                 finalized = true;
                 uint contribCutOff = bid.maxVal >= localSumAcceptedContrib ? bid.maxVal - localSumAcceptedContrib : 0; // The amount of the contribution of the cut-off bid that can stay in the sale without spilling over the maxVal.
+                CutOff(contribCutOff);
                 contribCutOff = contribCutOff < bid.contrib ? contribCutOff : bid.contrib; // The amount that stays in the sale should not be more than the original contribution. This line is not required but it is added as an extra security measure.
                 bid.contributor.send(bid.contrib-contribCutOff); // Send the non-accepted part. Use send in order to not block if the contributor's fallback reverts.
                 bid.contrib = contribCutOff; // Update the contribution value.
