@@ -128,15 +128,6 @@ contract('IICO', function (accounts) {
     await iico.finalize(1000)
     
     // Redeem and verify we can't redeem more than once.
-    var result1 = await iico.redeem.call(1);
-    var result2 = await iico.redeem.call(2);
-    var result3 = await iico.redeem.call(3);
-    var result4 = await iico.redeem.call(4);
-    console.log("result of redeeming: " + result1);
-    console.log("result of redeeming: " + result2);
-    console.log("result of redeeming: " + result3);
-    console.log("result of redeeming: " + result4);
-    
     await iico.redeem(1)
     await expectThrow(iico.redeem(1))
     await iico.redeem(2)
