@@ -128,6 +128,15 @@ contract('IICO', function (accounts) {
     await iico.finalize(1000)
     
     // Redeem and verify we can't redeem more than once.
+    var result1 = await iico.redeem.call(1);
+    var result2 = await iico.redeem.call(2);
+    var result3 = await iico.redeem.call(3);
+    var result4 = await iico.redeem.call(4);
+    console.log("result of redeeming: " + result1);
+    console.log("result of redeeming: " + result2);
+    console.log("result of redeeming: " + result3);
+    console.log("result of redeeming: " + result4);
+    
     await iico.redeem(1)
     await expectThrow(iico.redeem(1))
     await iico.redeem(2)
@@ -140,23 +149,32 @@ contract('IICO', function (accounts) {
     
     // Verify the proper amounts of ETH are refunded.
     assert.equal(web3.eth.getBalance(buyerA).toNumber(), buyerABalanceAtTheEndOfSale, 'The buyer A has been given ETH back while the full bid should have been accepted')
-    assert.equal(web3.eth.getBalance(buyerB).toNumber(), buyerBBalanceAtTheEndOfSale + 10E18, 'The buyer B has been given ETH back while the full bid should have been accepted')
+    assert.closeTo(web3.eth.getBalance(buyerB).toNumber(), buyerBBalanceAtTheEndOfSale + 4E18, 0.01*1E18, 'The buyer B did not get a partial refund')
     assert.equal(web3.eth.getBalance(buyerC).toNumber(), buyerCBalanceAtTheEndOfSale, 'The buyer C has been given ETH back while the full bid should have been accepted')
     assert.equal(web3.eth.getBalance(buyerD).toNumber(), buyerDBalanceAtTheEndOfSale, 'The buyer D has been given ETH back while the full bid should have been accepted')
     
-    assert.equal(web3.eth.getBalance(beneficiary).toNumber(), beneficiaryBalanceAtTheEndOfSale+14E18, 'The beneficiary has not been paid correctly')
+    assert.equal(web3.eth.getBalance(beneficiary).toNumber(), beneficiaryBalanceAtTheEndOfSale+20E18, 'The beneficiary has not been paid correctly')
     
+    // Alice: 6 ETH 20% bonus = 7.20
+    // Bob:   6 ETH 18% bonus = 7.08
+    // Carl:  4 ETH 12% bonus = 4.48
+    // David: 4 ETH 8%  bonus = 4.32
+    var totalContributed = 7.2 + 7.08 + 4.48 + 4.32; // 23.08
 
-
+    var a = (await token.balanceOf(buyerA)).toNumber()
+    var b = (await token.balanceOf(buyerB)).toNumber()
+    var c = (await token.balanceOf(buyerC)).toNumber()
+    var d = (await token.balanceOf(buyerD)).toNumber()
+    console.log(a,b,c,d);
 
     // Verify that the tokens are correctly distributed.
-    // assert.equal((await token.balanceOf(buyerA)).toNumber(), 30E24, 'The buyer A has not been given the right amount of tokens')
-    // assert.equal((await token.balanceOf(buyerB)).toNumber(), 10E24, 'The buyer B has not been given the right amount of tokens')
-    // assert.equal((await token.balanceOf(buyerC)).toNumber(), 0, 'The buyer C has withdrawn completely but still got tokens')
-    // assert.equal((await token.balanceOf(buyerD)).toNumber(), 20E24, 'The buyer D has not been given the right amount of tokens')
-    // assert.equal((await token.balanceOf(buyerE)).toNumber(), 0, 'The buyer E got some tokens despite having its bid refunded')
-    // assert.equal((await token.balanceOf(buyerF)).toNumber(), 0, 'The buyer F got some tokens despite having its bid refunded')    
-
+    // 20 tokens tolerance because don't want to throw on first error
+    assert.closeTo( (await token.balanceOf(buyerA)).toNumber() / 1E18, 7.20 / totalContributed * 100, 20, 'The buyer A has not been given the right amount of tokens')
+    assert.closeTo( (await token.balanceOf(buyerB)).toNumber() / 1E18, 7.08 / totalContributed * 100, 20, 'The buyer B has not been given the right amount of tokens')
+    assert.closeTo( (await token.balanceOf(buyerC)).toNumber() / 1E18, 4.48 / totalContributed * 100, 20, 'The buyer C has not been given the right amount of tokens')
+    assert.closeTo( (await token.balanceOf(buyerD)).toNumber() / 1E18, 4.32 / totalContributed * 100, 20, 'The buyer D has not been given the right amount of tokens')
+   
+    assert.equal(true, false, "want to see log");
 
   })
 })

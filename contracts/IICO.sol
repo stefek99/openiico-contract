@@ -248,7 +248,7 @@ contract IICO {
      *  Note that anyone can call this function, not only the party which made the bid.
      *  @param _bidID ID of the bid to withdraw.
      */
-    function redeem(uint _bidID) public {
+    function redeem(uint _bidID) public returns(uint) {
         Bid storage bid = bids[_bidID];
         Bid storage cutOffBid = bids[cutOffBidID];
         require(finalized);
@@ -257,11 +257,14 @@ contract IICO {
         bid.redeemed=true;
         MaxValCutOffMaxVal(bid.maxVal, cutOffBid.maxVal);
         if (bid.maxVal > cutOffBid.maxVal || (bid.maxVal == cutOffBid.maxVal && _bidID >= cutOffBidID)) { // Give tokens if the bid is accepted.
-            token.transfer(bid.contributor, (tokensForSale * (bid.contrib + (bid.contrib * bid.bonus) / BONUS_DIVISOR)) / sumAcceptedVirtualContrib);
-            ReedemTokens( (tokensForSale * (bid.contrib + (bid.contrib * bid.bonus) / BONUS_DIVISOR)) / sumAcceptedVirtualContrib );
+            uint number = (tokensForSale * (bid.contrib + (bid.contrib * bid.bonus) / BONUS_DIVISOR)) / sumAcceptedVirtualContrib;
+            token.transfer(bid.contributor, number);
+            ReedemTokens( number );
+            return number;
         } else {                                                                                          // Reimburse ETH otherwise.
             bid.contributor.transfer(bid.contrib);
             ReedemETH(bid.contrib);
+            return bid.contrib;
         }
     }
 
