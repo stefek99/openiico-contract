@@ -92,7 +92,7 @@ contract('IICO', function (accounts) {
 
     await expectThrow(iico.withdraw(3,{from: buyerB})) // Only the contributor can withdraw.
     let tx = await iico.withdraw(3,{from: buyerC, gasPrice: gasPrice})
-    printAll("withdraw bob")
+
 
 
 
@@ -109,9 +109,7 @@ contract('IICO', function (accounts) {
     // Now David, after seeing how the sale is evolving, decides that he also wants some tokens 
     // and contributes 4 ETH with a personal cap of 24 ETH. He gets an 8% bonus. 
     increaseTime(1000) // now it is 3000 out of 5000
-    /* DAVID */ await iico.searchAndBid(24E18, 0, {from: buyerC, value:4E18}) // Davids's bid, bonus 8%
-    printAll("david")
-
+    /* DAVID */ await iico.searchAndBid(24E18, 0, {from: buyerD, value:4E18}) // Davids's bid, bonus 8
 
     var DavidsBid = await iico.bids.call(4);
     var DavidsBidBonus = DavidsBid[4].toNumber();
@@ -156,17 +154,13 @@ contract('IICO', function (accounts) {
     var b = (await token.balanceOf(buyerB)).toNumber()
     var c = (await token.balanceOf(buyerC)).toNumber()
     var d = (await token.balanceOf(buyerD)).toNumber()
-    console.log(a,b,c,d);
 
     // Verify that the tokens are correctly distributed.
-    // 20 tokens tolerance because don't want to throw on first error
-    assert.closeTo( (await token.balanceOf(buyerA)).toNumber() / 1E18, 7.20 / totalContributed * 100, 20, 'The buyer A has not been given the right amount of tokens')
-    assert.closeTo( (await token.balanceOf(buyerB)).toNumber() / 1E18, 7.08 / totalContributed * 100, 20, 'The buyer B has not been given the right amount of tokens')
-    assert.closeTo( (await token.balanceOf(buyerC)).toNumber() / 1E18, 4.48 / totalContributed * 100, 20, 'The buyer C has not been given the right amount of tokens')
-    assert.closeTo( (await token.balanceOf(buyerD)).toNumber() / 1E18, 4.32 / totalContributed * 100, 20, 'The buyer D has not been given the right amount of tokens')
+    assert.closeTo( (await token.balanceOf(buyerA)).toNumber() / 1E18, 7.20 / totalContributed * 100, 1, 'The buyer A has not been given the right amount of tokens')
+    assert.closeTo( (await token.balanceOf(buyerB)).toNumber() / 1E18, 7.08 / totalContributed * 100, 1, 'The buyer B has not been given the right amount of tokens')
+    assert.closeTo( (await token.balanceOf(buyerC)).toNumber() / 1E18, 4.48 / totalContributed * 100, 1, 'The buyer C has not been given the right amount of tokens')
+    assert.closeTo( (await token.balanceOf(buyerD)).toNumber() / 1E18, 4.32 / totalContributed * 100, 1, 'The buyer D has not been given the right amount of tokens')
    
-    assert.equal(true, false, "want to see log");
-
   })
 })
 
